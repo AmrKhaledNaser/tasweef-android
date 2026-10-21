@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appName">تسويف</string>
+    <!-- twa=2 tells the web app that this app can download videos on the phone -->
+    <string name="launchUrl" translatable="false">https://tasweef.web.app/?twa=2</string>
+    <string name="webManifestUrl" translatable="false">https://tasweef.web.app/manifest.webmanifest</string>
+    <string name="providerAuthority" translatable="false">app.web.tasweef.twa.fileprovider</string>
+    <string name="assetStatements" translatable="false">[{ \"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": { \"namespace\": \"web\", \"site\": \"https://tasweef.web.app\" } }]</string>
+    <string name="shareTarget" translatable="false">{\"action\":\"/share\",\"method\":\"GET\",\"params\":{\"title\":\"title\",\"text\":\"text\",\"url\":\"url\"}}</string>
+
+    <string name="chDownloads">التنزيلات</string>
+    <string name="chDone">اكتمال التنزيل</string>
+    <string name="started">بدأ التنزيل على هاتفك. تابع تقدّمه في الإشعارات.</string>
+    <string name="preparing">جارٍ التحضير…</string>
+    <string name="updating">تحديث أداة التنزيل…</string>
+    <string name="downloading">جارٍ التنزيل</string>
+    <string name="merging">دمج الصوت مع الصورة…</string>
+    <string name="saving">الحفظ في التنزيلات…</string>
+    <string name="queued">في الانتظار: %1$d</string>
+    <string name="done">اكتمل التنزيل</string>
+    <string name="doneText">محفوظ في التنزيلات ← Tasweef. اضغط للفتح.</string>
+    <string name="failed">تعذّر التنزيل</string>
+    <string name="failedBot">رفض يوتيوب الطلب مؤقتًا. حاول بعد قليل، أو من شبكة أخرى.</string>
+    <string name="failedNet">لا يوجد اتصال بالإنترنت.</string>
+    <string name="failedOther">حدث خطأ أثناء التنزيل. حاول مرة أخرى.</string>
+    <string name="cancel">إلغاء</string>
+    <string name="cancelled">أُلغي التنزيل</string>
+    <string name="badLink">الرابط غير صالح للتنزيل.</string>
+    <string name="needStorage">اسمح بالتخزين حتى يُحفظ الفيديو في التنزيلات.</string>
+</resources>

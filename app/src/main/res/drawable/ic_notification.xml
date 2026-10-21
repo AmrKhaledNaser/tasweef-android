@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the Tasweef mark: the line of the ي and the play dot of the ف -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="220" android:viewportHeight="220">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M14,99h96a4,4 0 0 1 4,4v14a4,4 0 0 1 -4,4H14a4,4 0 0 1 -4,-4v-14a4,4 0 0 1 4,-4z" />
+    <path android:fillColor="#FFFFFFFF" android:strokeColor="#FFFFFFFF" android:strokeWidth="10" android:strokeLineJoin="round"
+        android:pathData="M134,67L134,153L202,110Z" />
+</vector>
