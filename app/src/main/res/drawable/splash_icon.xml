@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 288dp canvas (Android's launch-screen icon without a background); the mark is 160dp wide in the middle -->
+<!-- 288dp canvas (Android's launch-screen icon without a background): the red bookmark, 120dp tall, in the middle.
+     The web launch animation (index.html, U = 1) starts from exactly this picture. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="288dp" android:height="288dp"
     android:viewportWidth="288" android:viewportHeight="288">
-    <group android:translateX="64" android:translateY="100" android:scaleX="0.8" android:scaleY="0.8">
-        <path android:fillColor="@color/markInk"
-            android:pathData="M4,44h96a4,4 0 0 1 4,4v14a4,4 0 0 1 -4,4H4a4,4 0 0 1 -4,-4v-14a4,4 0 0 1 4,-4z" />
-        <path android:fillColor="#E8352E" android:strokeColor="#E8352E" android:strokeWidth="10" android:strokeLineJoin="round"
-            android:pathData="M124,12L124,98L192,55Z" />
+    <group android:translateX="94" android:translateY="80">
+        <path android:fillColor="#E8352E"
+            android:pathData="M14,4H86A10,10 0 0 1 96,14V124L50,96L4,124V14A10,10 0 0 1 14,4Z" />
+        <path android:fillColor="#FFFFFF" android:strokeColor="#FFFFFF" android:strokeWidth="5" android:strokeLineJoin="round"
+            android:pathData="M40,36L40,72L68,54Z" />
     </group>
 </vector>
