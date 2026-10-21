@@ -51,7 +51,14 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || 'my-key-alias' }}
         run: |
           if [ "$SIGNED" = "1" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            # forgive a pasted label ("Key store password: …"), quotes, spaces or line breaks around the values
+            clean() { printf '%s' "$1" | tr -d '\r\n' | sed -E 's/^[^:]*[Pp]assword[^:]*: *//; s/^["'"'"' ]+//; s/["'"'"' ]+$//'; }
+            export KEYSTORE_PASSWORD="$(clean "$KEYSTORE_PASSWORD")"
+            export KEY_PASSWORD="$(clean "$KEY_PASSWORD")"
+            [ -n "$KEY_PASSWORD" ] || export KEY_PASSWORD="$KEYSTORE_PASSWORD"
+            [ ${#KEYSTORE_PASSWORD} -eq 12 ] && [ ${#KEY_PASSWORD} -eq 12 ] || echo "::warning::A password secret does not look like the 12-character one from signing-key-info.txt."
+            echo "$KEYSTORE_BASE64" | tr -d ' \r\n' | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "::notice::keystore $(stat -c %s "$RUNNER_TEMP/release.keystore") bytes (expected 2708)"
             export KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
           fi
           set -o pipefail
