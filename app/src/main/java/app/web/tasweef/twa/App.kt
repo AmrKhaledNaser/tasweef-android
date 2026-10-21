@@ -3,6 +3,7 @@ package app.web.tasweef.twa
 import android.app.Application
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
+import java.io.File
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
@@ -11,6 +12,8 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         Updater.checkInBackground(this)
+        // the APK an update downloaded is no longer needed once the app starts again (the update replaced the app)
+        thread(name = "update-cleanup") { File(cacheDir, "updates").deleteRecursively() }
         thread(name = "downloader-init") {
             try {
                 YoutubeDL.init(this)
