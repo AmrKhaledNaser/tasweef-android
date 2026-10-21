@@ -67,6 +67,11 @@ jobs:
           gradle assembleRelease --no-daemon 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-arm64-v8a-release.apk tasweef.apk
           cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk tasweef-32bit.apk
+          # read by the app's self-updater (releases/latest/download/version.json)
+          base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          printf '{"code":%s,"name":"%s","url":"%s/tasweef.apk","size":%s,"url32":"%s/tasweef-32bit.apk","size32":%s}\n' \
+            "$VERSION_CODE" "$VERSION_NAME" "$base" "$(stat -c %s tasweef.apk)" "$base" "$(stat -c %s tasweef-32bit.apk)" > version.json
+          cat version.json
           echo "::notice::tasweef.apk $(stat -c %s tasweef.apk) bytes, tasweef-32bit.apk $(stat -c %s tasweef-32bit.apk) bytes, version $VERSION_NAME ($VERSION_CODE), signed=$SIGNED"
 
       - name: Show build errors
@@ -90,4 +95,5 @@ jobs:
           files: |
             tasweef.apk
             tasweef-32bit.apk
+            version.json
           make_latest: true

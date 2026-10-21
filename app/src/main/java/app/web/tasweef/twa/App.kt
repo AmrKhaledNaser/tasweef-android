@@ -10,6 +10,7 @@ import kotlin.concurrent.thread
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+        Updater.checkInBackground(this)
         thread(name = "downloader-init") {
             try {
                 YoutubeDL.init(this)

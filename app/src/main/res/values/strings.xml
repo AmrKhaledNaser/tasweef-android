@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="appName">تسويف</string>
-    <!-- twa=2 tells the web app that this app can download videos on the phone -->
-    <string name="launchUrl" translatable="false">https://tasweef.web.app/?twa=2</string>
+    <!-- twa=3 tells the web app that this app can download videos on the phone -->
+    <string name="launchUrl" translatable="false">https://tasweef.web.app/?twa=3</string>
     <string name="webManifestUrl" translatable="false">https://tasweef.web.app/manifest.webmanifest</string>
     <string name="providerAuthority" translatable="false">app.web.tasweef.twa.fileprovider</string>
     <string name="assetStatements" translatable="false">[{ \"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": { \"namespace\": \"web\", \"site\": \"https://tasweef.web.app\" } }]</string>
@@ -26,5 +26,22 @@
     <string name="cancel">إلغاء</string>
     <string name="cancelled">أُلغي التنزيل</string>
     <string name="badLink">الرابط غير صالح للتنزيل.</string>
+    <string name="chUpdates">تحديثات التطبيق</string>
+    <string name="updateReady">نسخة جديدة من تسويف</string>
+    <string name="updateTap">اضغط للتحديث (%1$s ميجابايت)</string>
+    <string name="updateChecking">جارٍ البحث عن تحديث…</string>
+    <string name="updateNone">تسويف محدَّث، وهذه آخر نسخة.</string>
+    <string name="updateFailedCheck">تعذّر التحقق من التحديث. تأكد من الاتصال بالإنترنت.</string>
+    <string name="updateOffer">حجمها %1$s ميجابايت، وتُثبَّت فوق النسخة الحالية دون أن تضيع بياناتك.</string>
+    <string name="updateNow">تحديث الآن</string>
+    <string name="later">لاحقًا</string>
+    <string name="ok">حسنًا</string>
+    <string name="updateAllowTitle">خطوة واحدة أول مرة</string>
+    <string name="updateAllow">اسمح لتسويف بتثبيت التحديثات: فعّل «السماح من هذا المصدر» في الصفحة التالية ثم ارجع.</string>
+    <string name="updateAllowBtn">فتح الإعدادات</string>
+    <string name="updateNoPermission">لم يُسمح بالتثبيت بعد، فلم يكتمل التحديث. حاول مرة أخرى متى شئت.</string>
+    <string name="updateDownloading">جارٍ تنزيل التحديث…</string>
+    <string name="updateDownloadingPct">جارٍ تنزيل التحديث… %1$d٪</string>
+    <string name="updateFailed">تعذّر تنزيل التحديث. حاول مرة أخرى.</string>
     <string name="needStorage">اسمح بالتخزين حتى يُحفظ الفيديو في التنزيلات.</string>
 </resources>

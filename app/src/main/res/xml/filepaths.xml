@@ -2,4 +2,5 @@
 <paths>
     <files-path name="twa_splash" path="twa_splash/" />
     <external-path name="downloads" path="Download/" />
+    <cache-path name="updates" path="updates/" />
 </paths>

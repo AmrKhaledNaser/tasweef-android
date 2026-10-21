@@ -16,6 +16,6 @@ class LauncherActivity : com.google.androidbrowserhelper.trusted.LauncherActivit
 
     companion object {
         /** Raise when the web app needs to know about a new native ability. */
-        const val NATIVE_VERSION = "2"
+        const val NATIVE_VERSION = "3" // 2: downloads on the phone; 3: also updates itself (tasweef://update)
     }
 }
