@@ -148,7 +148,7 @@ class DownloadService : Service() {
             } else {
                 req.addOption("-f", "ba/b")
                 req.addOption("-x")
-                req.addOption("--audio-format", job.format)
+                req.addOption("--audio-format", if (job.format == "ogg") "vorbis" else job.format)
                 if (job.format != "wav") req.addOption("--audio-quality", job.bitrate + "K")
             }
         } else {
