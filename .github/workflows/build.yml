@@ -23,8 +23,10 @@ jobs:
       - name: Check signing secrets
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::Add the KEYSTORE_BASE64, KEYSTORE_PASSWORD and KEY_PASSWORD secrets (Settings > Secrets and variables > Actions)."
-            exit 1
+            echo "::warning::No signing secrets yet (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_PASSWORD): this build only checks the code and is not published."
+            echo "SIGNED=0" >> "$GITHUB_ENV"
+          else
+            echo "SIGNED=1" >> "$GITHUB_ENV"
           fi
 
       - uses: actions/setup-java@v5
@@ -48,8 +50,10 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || 'my-key-alias' }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
-          export KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
+          if [ "$SIGNED" = "1" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            export KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
+          fi
           set -o pipefail
           gradle assembleRelease --no-daemon 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-release.apk tasweef.apk
@@ -64,6 +68,7 @@ jobs:
           fi
 
       - name: Publish release
+        if: env.SIGNED == '1'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION_NAME }}
