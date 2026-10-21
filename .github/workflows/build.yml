@@ -57,7 +57,8 @@ jobs:
           set -o pipefail
           gradle assembleRelease --no-daemon 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-release.apk tasweef.apk
-          ls -la tasweef.apk
+          echo "::notice::tasweef.apk $(stat -c %s tasweef.apk) bytes, version $VERSION_NAME ($VERSION_CODE), signed=$SIGNED"
+          echo "APK_SIZE=$(stat -c %s tasweef.apk)" >> "$GITHUB_ENV"
 
       - name: Show build errors
         if: failure()
