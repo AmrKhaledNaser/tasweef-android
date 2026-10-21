@@ -42,7 +42,9 @@ jobs:
         run: |
           # the first APK (PWABuilder) was version code 1
           echo "VERSION_CODE=$((GITHUB_RUN_NUMBER + 1))" >> "$GITHUB_ENV"
-          echo "VERSION_NAME=2.0.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          # the shown version stays 1.0.0 while the app is in testing; the build number still grows so updates install
+          echo "VERSION_NAME=1.0.0" >> "$GITHUB_ENV"
+          echo "TAG=1.0.0-build.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
 
       - name: Build
         env:
@@ -79,8 +81,8 @@ jobs:
         if: env.SIGNED == '1'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION_NAME }}
-          name: تسويف ${{ env.VERSION_NAME }} للأندرويد
+          tag_name: ${{ env.TAG }}
+          name: تسويف ${{ env.VERSION_NAME }} للأندرويد (بناء ${{ github.run_number }})
           body: |
             تطبيق تسويف للأندرويد، ومعه تنزيل الفيديو والصوت على الهاتف مباشرة.
             tasweef.apk لمعظم الهواتف، وtasweef-32bit.apk للهواتف القديمة إن لم يُثبَّت الأول.
