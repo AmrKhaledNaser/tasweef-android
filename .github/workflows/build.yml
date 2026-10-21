@@ -82,6 +82,21 @@ jobs:
             grep -E "^e: |error:|What went wrong|Could not|> " build.log | grep -v "^> Task" | head -40 | while IFS= read -r l; do echo "::error::$l"; done
           fi
 
+      # The download link on tasweef.web.app points here: GitHub Pages serves the file itself, from one
+      # address, as an Android app (application/vnd.android.package-archive), so Chrome just downloads it.
+      # A release link instead passes through github.com and a redirect, and phones often stall on it.
+      - name: Publish the download files (GitHub Pages)
+        if: env.SIGNED == '1'
+        run: |
+          mkdir -p site && cp tasweef.apk tasweef-32bit.apk version.json site/ && touch site/.nojekyll
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=https://tasweef.web.app/app/">' > site/index.html
+          cd site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "APK $VERSION_NAME ($VERSION_CODE)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+
       - name: Publish release
         if: env.SIGNED == '1'
         uses: softprops/action-gh-release@v2
