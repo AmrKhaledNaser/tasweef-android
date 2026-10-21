@@ -56,9 +56,9 @@ jobs:
           fi
           set -o pipefail
           gradle assembleRelease --no-daemon 2>&1 | tee build.log
-          cp app/build/outputs/apk/release/app-release.apk tasweef.apk
-          echo "::notice::tasweef.apk $(stat -c %s tasweef.apk) bytes, version $VERSION_NAME ($VERSION_CODE), signed=$SIGNED"
-          echo "APK_SIZE=$(stat -c %s tasweef.apk)" >> "$GITHUB_ENV"
+          cp app/build/outputs/apk/release/app-arm64-v8a-release.apk tasweef.apk
+          cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk tasweef-32bit.apk
+          echo "::notice::tasweef.apk $(stat -c %s tasweef.apk) bytes, tasweef-32bit.apk $(stat -c %s tasweef-32bit.apk) bytes, version $VERSION_NAME ($VERSION_CODE), signed=$SIGNED"
 
       - name: Show build errors
         if: failure()
@@ -76,6 +76,9 @@ jobs:
           name: تسويف ${{ env.VERSION_NAME }} للأندرويد
           body: |
             تطبيق تسويف للأندرويد، ومعه تنزيل الفيديو والصوت على الهاتف مباشرة.
+            tasweef.apk لمعظم الهواتف، وtasweef-32bit.apk للهواتف القديمة إن لم يُثبَّت الأول.
             حمّله من https://tasweef.web.app/app ثم افتحه واسمح بالتثبيت. يُثبَّت فوق النسخة السابقة دون أن تضيع بياناتك.
-          files: tasweef.apk
+          files: |
+            tasweef.apk
+            tasweef-32bit.apk
           make_latest: true

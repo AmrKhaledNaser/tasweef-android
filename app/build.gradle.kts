@@ -16,8 +16,6 @@ android {
         targetSdk = 35
         versionCode = buildNumber
         versionName = System.getenv("VERSION_NAME") ?: "2.0.0"
-        // phones only: 64-bit and older 32-bit ARM (keeps the APK about half the size of a universal one)
-        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     signingConfigs {
@@ -36,6 +34,17 @@ android {
         release {
             isMinifyEnabled = false
             signingConfig = if (System.getenv("KEYSTORE_FILE") != null) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+        }
+    }
+
+    // One APK per processor type: a universal one carries Python and ffmpeg twice (about 100 MB).
+    // tasweef.apk is the 64-bit one almost every phone uses; tasweef-32bit.apk is for older phones.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = false
         }
     }
 
