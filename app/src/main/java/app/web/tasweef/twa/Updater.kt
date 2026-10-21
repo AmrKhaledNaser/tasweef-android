@@ -48,11 +48,32 @@ object Updater {
         null
     }
 
-    /** Called when the app starts: checks at most once a day and notifies once per new build. */
+    /**
+     * Called whenever the app comes to the front: checks at most every 10 minutes, and when a newer build exists
+     * offers it right inside the app (at most once a day per build, so "later" isn't nagged), besides the notification.
+     */
+    fun checkOnResume(activity: android.app.Activity) {
+        val prefs = activity.getSharedPreferences("updater", Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        if (now - prefs.getLong("resumeCheckedAt", 0) < 10 * 60 * 1000L) return
+        prefs.edit().putLong("resumeCheckedAt", now).apply()
+        thread(name = "update-check-ui") {
+            val info = fetch() ?: return@thread
+            prefs.edit().putLong("checkedAt", now).apply()
+            if (info.code <= installedCode(activity)) return@thread
+            if (prefs.getLong("offered", 0) == info.code && now - prefs.getLong("offeredAt", 0) < 24 * 3600 * 1000L) return@thread
+            prefs.edit().putLong("offered", info.code).putLong("offeredAt", now).apply()
+            activity.runOnUiThread {
+                if (!activity.isFinishing) activity.startActivity(Intent(activity, UpdateActivity::class.java))
+            }
+        }
+    }
+
+    /** Called when the app's process starts: checks at most every 6 hours and notifies once per new build. */
     fun checkInBackground(ctx: Context) {
         val prefs = ctx.getSharedPreferences("updater", Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
-        if (now - prefs.getLong("checkedAt", 0) < 20 * 3600 * 1000L) return
+        if (now - prefs.getLong("checkedAt", 0) < 6 * 3600 * 1000L) return
         thread(name = "update-check") {
             val info = fetch() ?: return@thread
             prefs.edit().putLong("checkedAt", now).apply()

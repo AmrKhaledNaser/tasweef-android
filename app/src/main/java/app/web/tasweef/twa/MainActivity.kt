@@ -123,6 +123,11 @@ class MainActivity : ComponentActivity() {
         else web.loadUrl(startUrl(intent) ?: HOME)
     }
 
+    override fun onResume() {
+        super.onResume()
+        Updater.checkOnResume(this) // a newer build is offered right here, not only as a notification
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         startUrl(intent)?.let { web.loadUrl(it) }
