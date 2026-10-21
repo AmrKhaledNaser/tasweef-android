@@ -2,4 +2,5 @@
 <resources>
     <color name="splashBackground">#181818</color>
     <color name="accent">#E9EDF1</color>
+    <color name="markInk">#E9EDF1</color>
 </resources>

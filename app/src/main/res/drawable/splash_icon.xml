@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 288dp canvas (Android's launch-screen icon without a background); the mark is 160dp wide in the middle -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp" android:height="288dp"
+    android:viewportWidth="288" android:viewportHeight="288">
+    <group android:translateX="64" android:translateY="100" android:scaleX="0.8" android:scaleY="0.8">
+        <path android:fillColor="@color/markInk"
+            android:pathData="M4,44h96a4,4 0 0 1 4,4v14a4,4 0 0 1 -4,4H4a4,4 0 0 1 -4,-4v-14a4,4 0 0 1 4,-4z" />
+        <path android:fillColor="#E8352E" android:strokeColor="#E8352E" android:strokeWidth="10" android:strokeLineJoin="round"
+            android:pathData="M124,12L124,98L192,55Z" />
+    </group>
+</vector>

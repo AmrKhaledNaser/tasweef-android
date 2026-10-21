@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="appName">تسويف</string>
-    <!-- twa=3 tells the web app that this app can download videos on the phone -->
-    <string name="launchUrl" translatable="false">https://tasweef.web.app/?twa=3</string>
-    <string name="webManifestUrl" translatable="false">https://tasweef.web.app/manifest.webmanifest</string>
     <string name="providerAuthority" translatable="false">app.web.tasweef.twa.fileprovider</string>
-    <string name="assetStatements" translatable="false">[{ \"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": { \"namespace\": \"web\", \"site\": \"https://tasweef.web.app\" } }]</string>
-    <string name="shareTarget" translatable="false">{\"action\":\"/share\",\"method\":\"GET\",\"params\":{\"title\":\"title\",\"text\":\"text\",\"url\":\"url\"}}</string>
 
     <string name="chDownloads">التنزيلات</string>
     <string name="chDone">اكتمال التنزيل</string>
@@ -43,5 +38,6 @@
     <string name="updateDownloading">جارٍ تنزيل التحديث…</string>
     <string name="updateDownloadingPct">جارٍ تنزيل التحديث… %1$d٪</string>
     <string name="updateFailed">تعذّر تنزيل التحديث. حاول مرة أخرى.</string>
+    <string name="savedToDownloads">حُفظ الملف في التنزيلات ← Tasweef.</string>
     <string name="needStorage">اسمح بالتخزين حتى يُحفظ الفيديو في التنزيلات.</string>
 </resources>

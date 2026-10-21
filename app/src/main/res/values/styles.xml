@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- DownloadActivity shows nothing: it hands the link to the service and closes -->
+    <style name="Theme.Tasweef" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splashBackground</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Android's launch screen: the mark (the line of the ي and the red play dot of the ف), centred, 160dp wide.
+         The page's launch animation starts from exactly this picture. -->
+    <style name="Theme.Tasweef.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splashBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.Tasweef</item>
+    </style>
+
+    <!-- DownloadActivity and UpdateActivity show nothing of their own -->
     <style name="Invisible" parent="@android:style/Theme.Translucent.NoTitleBar">
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:windowNoDisplay">false</item>
