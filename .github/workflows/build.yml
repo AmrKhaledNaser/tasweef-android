@@ -14,11 +14,11 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check signing secrets
         run: |
@@ -27,7 +27,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -50,9 +50,18 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
           export KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
-          gradle assembleRelease --no-daemon --stacktrace
+          set -o pipefail
+          gradle assembleRelease --no-daemon 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-release.apk tasweef.apk
           ls -la tasweef.apk
+
+      - name: Show build errors
+        if: failure()
+        run: |
+          # surface the compiler / Gradle errors as annotations (readable without opening the log)
+          if [ -f build.log ]; then
+            grep -E "^e: |error:|What went wrong|Could not|> " build.log | grep -v "^> Task" | head -40 | while IFS= read -r l; do echo "::error::$l"; done
+          fi
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
