@@ -46,6 +46,22 @@ jobs:
           echo "VERSION_NAME=1.0.0" >> "$GITHUB_ENV"
           echo "TAG=1.0.0-build.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
 
+      - name: QuickJS for YouTube's JS challenges
+        run: |
+          # yt-dlp now needs a JavaScript engine to read YouTube videos quickly; without one it falls back to a
+          # slow path (about 15 s before a download starts). QuickJS-ng is small, built here for each processor,
+          # and packed as libqjs.so so Android installs it as an executable next to Python and ffmpeg.
+          git clone -q --depth 1 -b v0.14.0 https://github.com/quickjs-ng/quickjs "$RUNNER_TEMP/qjs"
+          NDK="${ANDROID_NDK_LATEST_HOME:-$ANDROID_NDK_HOME}"
+          for abi in arm64-v8a armeabi-v7a; do
+            cmake -S "$RUNNER_TEMP/qjs" -B "$RUNNER_TEMP/qjs-$abi" -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+              -DANDROID_ABI=$abi -DANDROID_PLATFORM=24 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF > /dev/null
+            cmake --build "$RUNNER_TEMP/qjs-$abi" --target qjs_exe -j4 > /dev/null
+            mkdir -p app/src/main/jniLibs/$abi
+            cp "$RUNNER_TEMP/qjs-$abi/qjs" app/src/main/jniLibs/$abi/libqjs.so
+            echo "::notice::libqjs.so $abi $(stat -c %s app/src/main/jniLibs/$abi/libqjs.so) bytes"
+          done
+
       - name: Build
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

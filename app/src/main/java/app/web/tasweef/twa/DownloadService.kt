@@ -110,11 +110,16 @@ class DownloadService : Service() {
 
         val dir = File(cacheDir, "dl/${job.id}").apply { deleteRecursively(); mkdirs() }
         try {
-            var error = attempt(job, dir)
+            var error = attempt(job, dir, withJs = true)
+            // an older yt-dlp that does not know the JS options yet: once more the old way
+            if (error != null && !isCancelled(job) && error != getString(R.string.failedNet) && error != getString(R.string.cancelled) && jsEngine() != null) {
+                dir.listFiles()?.forEach { it.deleteRecursively() }
+                error = attempt(job, dir, withJs = false)
+            }
             // YouTube changes often: on a failure, update yt-dlp once and try again
             if (error != null && !isCancelled(job) && error != getString(R.string.failedNet) && error != getString(R.string.cancelled) && maybeUpdate(job, force = true)) {
                 dir.listFiles()?.forEach { it.deleteRecursively() }
-                error = attempt(job, dir)
+                error = attempt(job, dir, withJs = true)
             }
             if (isCancelled(job)) return done(job, null, getString(R.string.cancelled))
             if (error != null) return done(job, null, error)
@@ -134,9 +139,19 @@ class DownloadService : Service() {
         }
     }
 
+    /** QuickJS, packed in the APK as libqjs.so, when this build has it. */
+    private fun jsEngine(): File? = File(applicationInfo.nativeLibraryDir, "libqjs.so").takeIf { it.canExecute() || it.exists() }
+
     /** Runs yt-dlp; returns null on success or the message to show. */
-    private fun attempt(job: Job, dir: File): String? {
+    private fun attempt(job: Job, dir: File, withJs: Boolean): String? {
         val req = YoutubeDLRequest(job.url)
+        val qjs = if (withJs) jsEngine() else null
+        if (qjs != null) {
+            // YouTube hides its video addresses behind a small JavaScript puzzle: solve it with QuickJS
+            // (the solver scripts come once from yt-dlp's GitHub and stay in the cache) instead of the slow fallback
+            req.addOption("--js-runtimes", "quickjs:" + qjs.absolutePath)
+            req.addOption("--remote-components", "ejs:github")
+        }
         req.addOption("-o", dir.absolutePath + "/%(title).120B.%(ext)s")
         req.addOption("--no-playlist")
         req.addOption("--no-mtime")
