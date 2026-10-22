@@ -7,6 +7,7 @@
     <string name="chDone">اكتمال التنزيل</string>
     <string name="started">بدأ التنزيل على هاتفك. تابع تقدّمه في الإشعارات.</string>
     <string name="preparing">جارٍ التحضير…</string>
+    <string name="reading">جارٍ قراءة الفيديو…</string>
     <string name="updating">تحديث أداة التنزيل…</string>
     <string name="downloading">جارٍ التنزيل</string>
     <string name="merging">دمج الصوت مع الصورة…</string>

@@ -107,7 +107,6 @@ class DownloadService : Service() {
         if (isCancelled(job)) return done(job, null, getString(R.string.cancelled))
         paint(job, getString(R.string.preparing), -1f, force = true)
         if (!App.awaitDownloader()) return done(job, null, getString(R.string.failedOther))
-        maybeUpdate(job, force = false)
 
         val dir = File(cacheDir, "dl/${job.id}").apply { deleteRecursively(); mkdirs() }
         try {
@@ -142,6 +141,8 @@ class DownloadService : Service() {
         req.addOption("--no-playlist")
         req.addOption("--no-mtime")
         req.addOption("--no-part")
+        // keep what yt-dlp learns from YouTube's player between runs: without a cache it fetches and decodes it every time
+        req.addOption("--cache-dir", File(filesDir, "yt-dlp-cache").absolutePath)
         if (job.mode == "audio") {
             if (job.format == "best") {
                 req.addOption("-f", "ba[ext=m4a]/ba/b")
@@ -158,13 +159,15 @@ class DownloadService : Service() {
             req.addOption("--merge-output-format", "mp4")
         }
         return try {
-            YoutubeDL.execute(req, job.id) { progress: Float, _: Long, line: String ->
+            synchronized(App.ytLock) { YoutubeDL.execute(req, job.id) { progress: Float, _: Long, line: String ->
                 when {
+                    line.startsWith("[youtube]") || line.startsWith("[info]") ->
+                        paint(job, getString(R.string.reading), -1f)
                     line.contains("[Merger]") || line.contains("[ExtractAudio]") ->
                         paint(job, getString(R.string.merging), -1f, force = true)
                     progress >= 0f -> paint(job, getString(R.string.downloading), progress)
                 }
-            }
+            } }
             null
         } catch (e: YoutubeDL.CanceledException) {
             getString(R.string.cancelled)
@@ -180,23 +183,13 @@ class DownloadService : Service() {
         else -> getString(R.string.failedOther)
     }
 
-    /** Updates yt-dlp at most once a day (or right away after a failure, once per run). */
+    /** After a failure, updates yt-dlp right away (once per run) so the retry uses the newest version. */
     private var updatedThisRun = false
     private fun maybeUpdate(job: Job, force: Boolean): Boolean {
-        val prefs = getSharedPreferences("downloader", MODE_PRIVATE)
-        val last = prefs.getLong("updatedAt", 0L)
-        val now = System.currentTimeMillis()
-        if (force && updatedThisRun) return false
-        if (!force && now - last < 24 * 3600 * 1000L) return false
+        if (updatedThisRun) return false
         paint(job, getString(R.string.updating), -1f, force = true)
-        return try {
-            YoutubeDL.updateYoutubeDL(applicationContext)
-            prefs.edit().putLong("updatedAt", now).apply()
-            updatedThisRun = true
-            true
-        } catch (_: Exception) {
-            false
-        }
+        updatedThisRun = App.refreshDownloader(applicationContext, force = true)
+        return updatedThisRun
     }
 
     private fun isCancelled(job: Job) = synchronized(cancelled) { job.id in cancelled }

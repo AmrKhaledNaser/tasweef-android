@@ -22,12 +22,31 @@ class App : Application() {
                 initError = t
             }
             ready.countDown()
+            // the daily yt-dlp update runs here, in the background, instead of in front of a download
+            if (initError == null) refreshDownloader(this)
         }
     }
 
     companion object {
         private val ready = CountDownLatch(1)
         @Volatile var initError: Throwable? = null
+
+        /** Held while yt-dlp runs or updates, so an update never swaps its files under a running download. */
+        val ytLock = Any()
+
+        /** Updates yt-dlp when the last update is a day old (or [force]); true when it updated. */
+        fun refreshDownloader(ctx: android.content.Context, force: Boolean = false): Boolean {
+            val prefs = ctx.getSharedPreferences("downloader", MODE_PRIVATE)
+            val now = System.currentTimeMillis()
+            if (!force && now - prefs.getLong("updatedAt", 0L) < 24 * 3600 * 1000L) return false
+            return synchronized(ytLock) {
+                try {
+                    YoutubeDL.updateYoutubeDL(ctx.applicationContext)
+                    prefs.edit().putLong("updatedAt", now).apply()
+                    true
+                } catch (_: Exception) { false }
+            }
+        }
 
         /** Blocks until the downloader is unpacked; false if that failed. */
         fun awaitDownloader(): Boolean {
