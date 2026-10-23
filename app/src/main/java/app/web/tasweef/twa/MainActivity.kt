@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
             setSupportMultipleWindows(false) // links that open a new window come through shouldOverrideUrlLoading
             allowFileAccess = false
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE // the owner's computer on home Wi-Fi is http
+            textZoom = 100 // same text size as the browser, whatever the phone's font-size setting
             userAgentString = "$userAgentString TasweefApp/${LauncherInfo.NATIVE_VERSION}"
         }
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true) // YouTube's player
