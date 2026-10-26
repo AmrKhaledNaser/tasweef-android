@@ -3,6 +3,7 @@
     <string name="appName">تسويف</string>
     <string name="providerAuthority" translatable="false">app.web.tasweef.twa.fileprovider</string>
 
+    <string name="ytListenerName">تسويف: تنزيلات يوتيوب</string>
     <string name="chDownloads">التنزيلات</string>
     <string name="chDone">اكتمال التنزيل</string>
     <string name="started">بدأ التنزيل على هاتفك. تابع تقدّمه في الإشعارات.</string>
