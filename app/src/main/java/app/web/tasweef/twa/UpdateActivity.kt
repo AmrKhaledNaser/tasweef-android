@@ -53,6 +53,7 @@ class UpdateActivity : Activity() {
         dialog?.dismiss()
         dialog = b.create().apply {
             setOnDismissListener { if (!waitingForPermission) { cancelled = true; finish() } }
+            setCanceledOnTouchOutside(false) // a tap beside it doesn't close the update offer; its buttons (or Back) do
             show()
         }
     }
