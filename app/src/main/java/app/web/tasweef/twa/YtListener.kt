@@ -101,7 +101,7 @@ class YtListener : NotificationListenerService() {
 object YtQueue {
     /** set while the app's window is open, so the page hears about a new title right away */
     @Volatile var onChange: (() -> Unit)? = null
-    private const val SIX_HOURS = 6 * 3600_000L
+    private const val TWICE_WINDOW = 15 * 60_000L // one download can be noticed twice (progress, then "downloaded")
     private const val WEEK = 7 * 24 * 3600_000L
 
     private fun prefs(c: Context) = c.getSharedPreferences("ytq", Context.MODE_PRIVATE)
@@ -111,7 +111,7 @@ object YtQueue {
         val p = prefs(c)
         val now = System.currentTimeMillis()
         val seen = try { JSONObject(p.getString("seen", "{}")!!) } catch (_: Exception) { JSONObject() }
-        if (now - seen.optLong(title, 0) < SIX_HOURS) return // the same download noticed twice
+        if (now - seen.optLong(title, 0) < TWICE_WINDOW) return // the same download noticed twice
         seen.put(title, now)
         seen.keys().asSequence().toList().forEach { if (now - seen.optLong(it, 0) > WEEK) seen.remove(it) }
         val q = try { JSONArray(p.getString("q", "[]")) } catch (_: Exception) { JSONArray() }

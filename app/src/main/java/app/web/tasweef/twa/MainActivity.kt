@@ -248,6 +248,16 @@ class MainActivity : ComponentActivity() {
                 caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
         } catch (_: Exception) { true }
 
+        /** Opens the YouTube app on its own first screen. With no internet YouTube cannot open a video from a
+            link (it says it can't load the link), but its own screen leads straight to its downloads. */
+        @JavascriptInterface fun openYouTubeApp() {
+            if (!trusted) return
+            runOnUiThread {
+                val i = packageManager.getLaunchIntentForPackage(YtListener.YOUTUBE)
+                if (i != null) try { startActivity(i) } catch (_: Exception) {}
+            }
+        }
+
         /** Opens a video in the YouTube app itself, which plays its own downloaded copy when there is no internet. */
         @JavascriptInterface fun openYouTube(id: String) {
             if (!trusted || !Regex("[A-Za-z0-9_-]{6,20}").matches(id)) return
