@@ -240,6 +240,14 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        /** Whether the phone really reaches the internet (Wi-Fi or data with no internet counts as offline). */
+        @JavascriptInterface fun online(): Boolean = try {
+            val cm = getSystemService(android.net.ConnectivityManager::class.java)
+            val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+            caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        } catch (_: Exception) { true }
+
         /** Opens a video in the YouTube app itself, which plays its own downloaded copy when there is no internet. */
         @JavascriptInterface fun openYouTube(id: String) {
             if (!trusted || !Regex("[A-Za-z0-9_-]{6,20}").matches(id)) return

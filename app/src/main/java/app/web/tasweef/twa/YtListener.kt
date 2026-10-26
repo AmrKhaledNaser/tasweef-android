@@ -24,23 +24,30 @@ class YtListener : NotificationListenerService() {
         val ex = n.extras ?: return
         val title = ex.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim().orEmpty()
         val text = ex.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
+        // Only a video's own notification carries its picture. YouTube's other notices ("YouTube · Looking for
+        // incomplete downloads", "Downloading 2 videos"…) have none, and their title is not a video's, so they are
+        // never taken (one was, before this check). A download it was tracking stays tracked.
+        @Suppress("DEPRECATION")
+        val hasPicture = n.getLargeIcon() != null || ex.get(Notification.EXTRA_LARGE_ICON) != null
+        if (!hasPicture || generic(title)) return
+
+        val key = sbn.key
+        val seen = active[key]
+        // "Video downloaded" (or the Arabic): finished
+        if (DONE.containsMatchIn(text)) { active.remove(key); YtQueue.add(this, title); return }
         val max = ex.getInt(Notification.EXTRA_PROGRESS_MAX, 0)
         val pct = when {
             max > 0 -> ex.getInt(Notification.EXTRA_PROGRESS, 0) * 100 / max
             else -> sizePct(text) // "5 MB / 19 MB"
         }
-        val key = sbn.key
-        val seen = active[key]
         if (pct >= 0) {
-            // a download in progress (or just finished)
-            val t = if (generic(title)) seen?.first.orEmpty() else title
             val best = maxOf(pct, seen?.second ?: 0)
-            if (t.isNotEmpty()) active[key] = t to best
-            if (best >= 98 && t.isNotEmpty()) { active.remove(key); YtQueue.add(this, t) }
+            active[key] = title to best
+            if (best >= 98) { active.remove(key); YtQueue.add(this, title) }
         } else if (seen != null) {
-            // the same notification turned into "downloaded" (no progress bar any more)
+            // the same video's notification, now without a progress bar: done
             active.remove(key)
-            YtQueue.add(this, if (title.isNotEmpty() && !generic(title)) title else seen.first)
+            YtQueue.add(this, title)
         }
     }
 
@@ -54,9 +61,11 @@ class YtListener : NotificationListenerService() {
     companion object {
         const val YOUTUBE = "com.google.android.youtube"
         private val SIZE = Regex("""([\d.,]+)\s*([KMG]B|[كمج]ب|ميجا|كيلو|جيجا)\S*\s*/\s*([\d.,]+)\s*([KMG]B|[كمج]ب|ميجا|كيلو|جيجا)""", RegexOption.IGNORE_CASE)
-        private val GENERIC = Regex("""(^\d+\s)|downloading|downloaded|download complete|جار.? ?التنزيل|تم التنزيل|اكتمل التنزيل|فيديوهات""", RegexOption.IGNORE_CASE)
+        private val GENERIC = Regex("""(^\d+\s)|downloading|downloaded|download complete|incomplete|جار.? ?التنزيل|تم التنزيل|اكتمل التنزيل|فيديوهات""", RegexOption.IGNORE_CASE)
+        private val APP_NAME = Regex("""^(youtube|يوتيوب)$""", RegexOption.IGNORE_CASE)
+        private val DONE = Regex("""video downloaded|^downloaded$|download complete|تم تنزيل|تم التنزيل|اكتمل التنزيل""", RegexOption.IGNORE_CASE)
 
-        private fun generic(title: String) = title.isEmpty() || (title.length < 40 && GENERIC.containsMatchIn(title))
+        private fun generic(title: String) = title.isEmpty() || APP_NAME.matches(title) || (title.length < 40 && GENERIC.containsMatchIn(title))
 
         /** Percent from "5 MB / 19 MB" (Arabic or Western digits); -1 when the text has no sizes. */
         fun sizePct(text: String): Int {
