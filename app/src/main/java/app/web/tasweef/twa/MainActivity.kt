@@ -3,7 +3,6 @@ package app.web.tasweef.twa
 import android.annotation.SuppressLint
 import android.app.UiModeManager
 import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Color
@@ -12,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.provider.Settings
 import android.util.Base64
 import android.view.View
 import android.view.ViewGroup
@@ -29,7 +27,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -130,13 +127,6 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Updater.checkOnResume(this) // a newer build is offered right here, not only as a notification
-        // a video the YouTube app finished downloading while this window is open: the page adds it right away
-        YtQueue.onChange = { js("window.__twYtQueue && window.__twYtQueue()") }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        YtQueue.onChange = null
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -213,59 +203,6 @@ class MainActivity : ComponentActivity() {
             if (!trusted) return
             runOnUiThread {
                 startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null))
-            }
-        }
-
-        /* ── videos downloaded in the YouTube app ── */
-
-        /** Titles waiting to be added, as JSON [{key, title, at}]. */
-        @JavascriptInterface fun ytQueue(): String = if (trusted) YtQueue.list(this@MainActivity) else "[]"
-
-        /** The page added (or gave up on) these, by key. */
-        @JavascriptInterface fun ytQueueDone(keys: String) { if (trusted) YtQueue.done(this@MainActivity, keys) }
-
-        /** Whether the person turned on notification access for Tasweef. */
-        @JavascriptInterface fun ytListenerOn(): Boolean =
-            NotificationManagerCompat.getEnabledListenerPackages(this@MainActivity).contains(packageName)
-
-        /** Opens Android's notification-access page (straight to Tasweef's switch where Android allows it). */
-        @JavascriptInterface fun openListenerSettings() {
-            if (!trusted) return
-            runOnUiThread {
-                val cn = ComponentName(this@MainActivity, YtListener::class.java).flattenToString()
-                val direct = if (Build.VERSION.SDK_INT >= 30)
-                    Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS).putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, cn) else null
-                try { startActivity(direct ?: Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
-                catch (_: Exception) { try { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) } catch (_: Exception) {} }
-            }
-        }
-
-        /** Whether the phone really reaches the internet (Wi-Fi or data with no internet counts as offline). */
-        @JavascriptInterface fun online(): Boolean = try {
-            val cm = getSystemService(android.net.ConnectivityManager::class.java)
-            val caps = cm.getNetworkCapabilities(cm.activeNetwork)
-            caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-        } catch (_: Exception) { true }
-
-        /** Opens the YouTube app on its own first screen. With no internet YouTube cannot open a video from a
-            link (it says it can't load the link), but its own screen leads straight to its downloads. */
-        @JavascriptInterface fun openYouTubeApp() {
-            if (!trusted) return
-            runOnUiThread {
-                val i = packageManager.getLaunchIntentForPackage(YtListener.YOUTUBE)
-                if (i != null) try { startActivity(i) } catch (_: Exception) {}
-            }
-        }
-
-        /** Opens a video in the YouTube app itself, which plays its own downloaded copy when there is no internet. */
-        @JavascriptInterface fun openYouTube(id: String) {
-            if (!trusted || !Regex("[A-Za-z0-9_-]{6,20}").matches(id)) return
-            runOnUiThread {
-                try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$id")).setPackage(YtListener.YOUTUBE)) }
-                catch (_: ActivityNotFoundException) {
-                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$id"))) } catch (_: Exception) {}
-                }
             }
         }
 
