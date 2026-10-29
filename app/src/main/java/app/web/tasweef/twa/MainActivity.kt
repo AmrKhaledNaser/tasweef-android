@@ -19,6 +19,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -127,6 +128,13 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Updater.checkOnResume(this) // a newer build is offered right here, not only as a notification
+        // a download that finishes while the window is open shows on the Downloads page right away
+        DlStore.onChange = { js("window.__twDownloads && window.__twDownloads()") }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        DlStore.onChange = null
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -206,6 +214,47 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        /* ── the Downloads page: what was downloaded on this phone ── */
+
+        /** Every download still on the phone, newest first (JSON). Played in the page from /__/twdl/{id}. */
+        @JavascriptInterface fun downloads(): String = if (trusted) DlStore.list(this@MainActivity) else "[]"
+
+        /** Deletes one download from the phone (the page asked the person first). */
+        @JavascriptInterface fun deleteDownload(id: String): Boolean = trusted && DlStore.delete(this@MainActivity, id)
+
+        /** Opens one download in another app the person picks (a video player, a music app…). */
+        @JavascriptInterface fun openDownloadWith(id: String) {
+            if (!trusted) return
+            val o = DlStore.find(this@MainActivity, id) ?: return
+            runOnUiThread {
+                val view = Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(o.optString("uri")), o.optString("mime"))
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                try { startActivity(Intent.createChooser(view, null)) } catch (_: Exception) {}
+            }
+        }
+
+        /** Sends one download to another app or person (WhatsApp, Telegram…). */
+        @JavascriptInterface fun shareDownload(id: String) {
+            if (!trusted) return
+            val o = DlStore.find(this@MainActivity, id) ?: return
+            runOnUiThread {
+                val send = Intent(Intent.ACTION_SEND).setType(o.optString("mime")).putExtra(Intent.EXTRA_STREAM, Uri.parse(o.optString("uri")))
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                try { startActivity(Intent.createChooser(send, null)) } catch (_: Exception) {}
+            }
+        }
+
+        /** Opens a link in an app the person picks every time (YouTube, Brave, Chrome…). */
+        @JavascriptInterface fun openWith(url: String) {
+            if (!trusted) return
+            val u = Uri.parse(url)
+            if (u.scheme != "https" && u.scheme != "http") return
+            runOnUiThread {
+                val view = Intent(Intent.ACTION_VIEW, u).addCategory(Intent.CATEGORY_BROWSABLE)
+                try { startActivity(Intent.createChooser(view, null)) } catch (_: Exception) {}
+            }
+        }
+
         /** Saves a file the page made (an export, a file from the owner's computer) into Downloads/Tasweef. */
         @JavascriptInterface fun saveFile(name: String, mime: String, base64: String): Boolean {
             if (!trusted) return false
@@ -262,6 +311,14 @@ class MainActivity : ComponentActivity() {
             view.postDelayed({ pageReady = true }, 1200)
         }
 
+        // a downloaded file played inside the page: /__/twdl/{id} is answered from the phone, with byte ranges so
+        // the player can seek
+        override fun shouldInterceptRequest(view: WebView, req: WebResourceRequest): WebResourceResponse? {
+            val u = req.url
+            if (u.host != HOST || u.path?.startsWith("/__/twdl/") != true) return null
+            return serveDownload(u.lastPathSegment.orEmpty(), req.requestHeaders["Range"] ?: req.requestHeaders["range"])
+        }
+
         override fun shouldOverrideUrlLoading(view: WebView, req: WebResourceRequest): Boolean {
             val u = req.url
             if (!req.isForMainFrame) return false
@@ -272,6 +329,39 @@ class MainActivity : ComponentActivity() {
             try { startActivity(Intent(Intent.ACTION_VIEW, u).addCategory(Intent.CATEGORY_BROWSABLE)) } catch (_: ActivityNotFoundException) {}
             return true
         }
+    }
+
+    private fun serveDownload(id: String, range: String?): WebResourceResponse {
+        val o = DlStore.find(this, id) ?: return WebResourceResponse("text/plain", "utf-8", 404, "Not Found", emptyMap(), null)
+        val uri = Uri.parse(o.optString("uri"))
+        val mime = o.optString("mime").ifBlank { "application/octet-stream" }
+        val size = DlStore.sizeOf(this, uri)
+        val input = try { contentResolver.openInputStream(uri) } catch (_: Exception) { null }
+            ?: return WebResourceResponse("text/plain", "utf-8", 404, "Not Found", emptyMap(), null)
+        val m = range?.let { Regex("bytes=(\\d*)-(\\d*)").find(it) }
+        if (m == null || size <= 0) {
+            return WebResourceResponse(mime, null, 200, "OK", mapOf("Accept-Ranges" to "bytes", "Content-Length" to size.toString(), "Cache-Control" to "no-store"), input)
+        }
+        var start = m.groupValues[1].toLongOrNull() ?: 0L
+        var end = m.groupValues[2].toLongOrNull() ?: (size - 1)
+        if (m.groupValues[1].isEmpty()) { start = (size - end).coerceAtLeast(0); end = size - 1 } // "bytes=-500": the last bytes
+        end = end.coerceAtMost(size - 1)
+        var skipped = 0L
+        while (skipped < start) { val n = input.skip(start - skipped); if (n <= 0) break; skipped += n }
+        val length = end - start + 1
+        val body = object : java.io.FilterInputStream(input) {
+            var left = length
+            override fun read(): Int = if (left <= 0) -1 else super.read().also { if (it >= 0) left-- }
+            override fun read(b: ByteArray, off: Int, len: Int): Int {
+                if (left <= 0) return -1
+                val n = super.read(b, off, minOf(len.toLong(), left).toInt())
+                if (n > 0) left -= n
+                return n
+            }
+        }
+        return WebResourceResponse(mime, null, 206, "Partial Content", mapOf(
+            "Accept-Ranges" to "bytes", "Content-Range" to "bytes $start-$end/$size", "Content-Length" to length.toString(), "Cache-Control" to "no-store",
+        ), body)
     }
 
     /** intent://download?…#Intent;scheme=tasweef;package=…;end from the page: handled inside the app. */

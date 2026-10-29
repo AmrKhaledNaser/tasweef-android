@@ -130,6 +130,8 @@ class DownloadService : Service() {
                 ?: return done(job, null, getString(R.string.failedOther))
             paint(job, getString(R.string.saving), -1f, force = true)
             val uri = save(file)
+            // kept for the app's Downloads page: what it is, and the link it came from
+            runCatching { DlStore.add(this, uri, file.name, mimeOf(file.name), job.mode, job.url, job.title) }
             done(job, uri, null)
         } catch (t: Throwable) {
             done(job, null, if (isCancelled(job)) getString(R.string.cancelled) else getString(R.string.failedOther))
@@ -211,11 +213,16 @@ class DownloadService : Service() {
 
     /* ───────── saving into Downloads/Tasweef ───────── */
 
+    private fun mimeOf(name: String): String {
+        val ext = name.substringAfterLast('.', "").lowercase()
+        return MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+            ?: if (ext in setOf("mp3", "m4a", "opus", "ogg", "wav")) "audio/*" else "video/*"
+    }
+
     private fun save(file: File): Uri {
         val name = file.name
         val ext = name.substringAfterLast('.', "").lowercase()
-        val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
-            ?: if (ext in setOf("mp3", "m4a", "opus", "ogg", "wav", "webm")) "audio/*" else "video/*"
+        val mime = mimeOf(name)
         if (Build.VERSION.SDK_INT >= 29) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, name)
