@@ -51,7 +51,7 @@ import java.io.File
  * The page talks to the app through window.TasweefApp (downloads on the phone, updates, Google sign-in…).
  */
 class MainActivity : ComponentActivity() {
-    private lateinit var web: WebView
+    private lateinit var web: KeepWebView
     private lateinit var root: FrameLayout
     @Volatile private var pageReady = false
     @Volatile private var trusted = false // the main page is tasweef.web.app (the bridge answers only then)
@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
         window.navigationBarColor = Color.TRANSPARENT
 
         root = FrameLayout(this)
-        web = WebView(this)
+        web = KeepWebView(this)
         root.addView(web, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         setContentView(root)
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
@@ -137,6 +137,28 @@ class MainActivity : ComponentActivity() {
         DlStore.onChange = null
     }
 
+    override fun onDestroy() {
+        PlaybackService.onCommand = null
+        PlaybackService.stop(this)
+        super.onDestroy()
+    }
+
+    /** A video or audio playing: kept going when the screen turns off (see KeepWebView and PlaybackService). */
+    private fun mediaStarted(title: String) = runOnUiThread {
+        web.keepPlaying = true
+        PlaybackService.onCommand = { cmd ->
+            runOnUiThread {
+                if (cmd == "stop") { js("window.__twMedia && window.__twMedia('pause')"); web.keepPlaying = false }
+                else js("window.__twMedia && window.__twMedia('$cmd')")
+            }
+        }
+        try { PlaybackService.start(this, title) } catch (_: Exception) { /* not allowed to start now: it still plays while the screen is on */ }
+    }
+    private fun mediaStopped() = runOnUiThread {
+        web.keepPlaying = false
+        PlaybackService.stop(this)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         startUrl(intent)?.let { web.loadUrl(it) }
@@ -182,6 +204,13 @@ class MainActivity : ComponentActivity() {
 
     inner class Bridge {
         @JavascriptInterface fun version(): String = LauncherInfo.NATIVE_VERSION
+
+        /** The page's player opened (a video or audio starts): it keeps playing with the screen off. */
+        @JavascriptInterface fun mediaStart(title: String) = mediaStarted(title)
+        /** The player closed. */
+        @JavascriptInterface fun mediaStop() = mediaStopped()
+        /** Paused or playing again in the page: the notification's button follows. */
+        @JavascriptInterface fun mediaState(playing: Boolean) { PlaybackService.state(this@MainActivity, playing) }
 
         /** Safe-area sizes in CSS px, for the launch animation to start exactly where Android's launch screen is. */
         @JavascriptInterface fun insets(): String = "{\"top\":$insetTop,\"bottom\":$insetBottom}"

@@ -40,5 +40,11 @@
     <string name="updateDownloadingPct">جارٍ تنزيل التحديث… %1$d٪</string>
     <string name="updateFailed">تعذّر تنزيل التحديث. حاول مرة أخرى.</string>
     <string name="savedToDownloads">حُفظ الملف في التنزيلات ← Tasweef.</string>
+    <string name="chPlayback">التشغيل</string>
+    <string name="playNow">يُشغَّل الآن في تسويف</string>
+    <string name="playPaused">متوقف مؤقتًا</string>
+    <string name="playPause">إيقاف مؤقت</string>
+    <string name="playResume">تشغيل</string>
+    <string name="playStop">إغلاق</string>
     <string name="needStorage">اسمح بالتخزين حتى يُحفظ الفيديو في التنزيلات.</string>
 </resources>
