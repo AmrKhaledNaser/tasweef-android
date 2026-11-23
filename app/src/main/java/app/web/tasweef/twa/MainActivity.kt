@@ -205,6 +205,9 @@ class MainActivity : ComponentActivity() {
     inner class Bridge {
         @JavascriptInterface fun version(): String = LauncherInfo.NATIVE_VERSION
 
+        /** The phone's text size (1 = normal): the page's "match device" text size follows it. */
+        @JavascriptInterface fun fontScale(): Float = resources.configuration.fontScale
+
         /** The page's player opened (a video or audio starts): it keeps playing with the screen off. */
         @JavascriptInterface fun mediaStart(title: String) = mediaStarted(title)
         /** The player closed. */
