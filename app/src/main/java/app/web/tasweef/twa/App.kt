@@ -15,6 +15,9 @@ class App : Application() {
         // the APK an update downloaded is no longer needed once the app starts again (the update replaced the app)
         thread(name = "update-cleanup") { File(cacheDir, "updates").deleteRecursively() }
         thread(name = "downloader-init") {
+            // what a download left half-done when the app was closed in the middle of it (downloads wait for
+            // this thread, so none is writing there yet)
+            File(cacheDir, "dl").deleteRecursively()
             try {
                 YoutubeDL.init(this)
                 FFmpeg.init(this)

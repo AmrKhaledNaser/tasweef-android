@@ -106,6 +106,12 @@ class MainActivity : ComponentActivity() {
             textZoom = 100 // same text size as the browser, whatever the phone's font-size setting
             userAgentString = "$userAgentString TasweefApp/${LauncherInfo.NATIVE_VERSION}"
         }
+        // after an update, the web page's old copies in the cache are of no use: empty it once
+        val build = packageManager.getPackageInfo(packageName, 0).lastUpdateTime
+        if (prefs.getLong("cacheFor", 0L) != build) {
+            web.clearCache(true)
+            prefs.edit().putLong("cacheFor", build).apply()
+        }
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true) // YouTube's player
         web.addJavascriptInterface(Bridge(), "TasweefApp")
         web.webViewClient = Client()
